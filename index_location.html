@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
+    <head>
+        <title></title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>轨迹</title>
+    <link rel="stylesheet" href="openlayers.css" type="text/css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+      #nodelist {
+        position: absolute;
+        right: 100px;
+        top: 300px;
+        width: 300px;
+        height: 200px;
+      }
+      #search{
+        position:fixed;
+        top:100px;
+        right:0;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map">
+    </div>
+    <!-- <div id="nodelist" style="position: absolute;top:10px;right:10px;width:400px;height:500px"></div> -->
+    <script src="./bundle.js"></script>
+    <script type="text/javascript">
+       window.document.addEventListener("message", function(event) {
+        let data = JSON.parse(event.data)
+          window.long = data.longitude
+          window.lat = data.latitude
+        });
+    </script>
+  </body>
+</html>
