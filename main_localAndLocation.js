@@ -175,7 +175,7 @@ function suidao(K0101,A0102,K6324){
       return
     }
     vectorSource.addFeatures(features);
-    map.getView().fit(vectorSource.getExtent());
+    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/10, maxZoom:12});
   });
 }
 function qiaoliang(K0101,A0102,K6003){
@@ -212,7 +212,7 @@ function qiaoliang(K0101,A0102,K6003){
       return
     }
     vectorSource.addFeatures(features);
-    map.getView().fit(vectorSource.getExtent());
+    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/10, maxZoom:12});
   });
 }
 function luxian(K0101){
