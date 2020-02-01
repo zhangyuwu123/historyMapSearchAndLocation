@@ -1,14 +1,18 @@
-import { Map, View, style, geom, layer, source,Feature } from "ol";
-// import TileLayer from "ol/layer/Tile";
-import {Icon, Style} from 'ol/style';
-import Point from 'ol/geom/Point';
+import { Map, View,Feature } from "ol";
+import("ol/Feature.js").default
+import("ol/MapBrowserEvent").default
+import("ol/coordinate.js").Coordinate|undefined
+import {Stroke, Style,Fill} from 'ol/style';
 import LineString from 'ol/geom/LineString';
-import Image from "ol/layer/Image";
 import XYZ from "ol/source/XYZ";
-import { transform, Projection } from "ol/proj";
-import { TileWMS, Vector as VectorSource, ImageWMS } from "ol/source";
+import { Projection } from "ol/proj";
+import { TileWMS, Vector as VectorSource, OSM } from "ol/source";
 import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
-import {Stroke} from 'ol/style';
+// import 'ol/ol.css';
+import {unByKey} from 'ol/Observable';
+import Overlay from 'ol/Overlay';
+import {getLength} from 'ol/sphere';
+import Draw from 'ol/interaction/Draw';
 
 import {
   equalTo as equalToFilter,
@@ -25,6 +29,25 @@ var regexpLuxian = new RegExp(
 )
 var tempVectorLayer = [] //需要清除的线
 var wfsVectorLayer 
+// 测距
+var raster = new TileLayer({
+  source: new OSM()
+});
+
+var source = new VectorSource();
+
+var vector = new VectorLayer({
+  source: source,
+  style: new Style({
+    fill: new Fill({
+      color: 'rgba(255, 255, 255, 0.2)'
+    }),
+    stroke: new Stroke({
+      color: '#ffcc33',
+      width: 2
+    })
+  })
+});
 // http://127.0.0.1:8080/geoserver/cite/wms
 //加载geoserver发布的地图
 function addWms() {
@@ -35,7 +58,6 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:xjgd,cite:shengdao,cite:xiandao,cite:xiangdao,cite:zhuanyong,cite:cundao,cite:jianzhilian,cite:jianzhiying,cite:shi,cite:qiaoliang,cite:suidao,cite:tuanchang,cite:zizhiquguodao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-
         tilesOrigin: 87.6168 + "," + 43.8256
       },
       serverType: "geoserver"
@@ -56,14 +78,17 @@ var map = new Map({
   target: "map",
   projection: projection,
 	displayProjection: displayProjection,
-  layers: [tileLayer],
+  layers: [tileLayer, vector],
   view: new View({
     center: [87.6168 , 43.8256],
     zoom: 5,
     projection: "EPSG:4326"
   })
 });
-map.on("singleclick", function(evt) {
+//查询选择的路线信息
+map.on("singleclick", handleSingleClick);
+addWms();
+function handleSingleClick(evt) {
   var view = map.getView();
   var viewResolution = (view.getResolution());
   var url = wfsVectorLayer.getSource().getGetFeatureInfoUrl(
@@ -92,9 +117,7 @@ map.on("singleclick", function(evt) {
         }
       });
   }
-});
-addWms();
-
+}
 //绘制选中的路线
 function drawSelectedLine(features){
   if(features.length > 0){
@@ -138,7 +161,7 @@ function receiveMessageFromIndex ( event ) {
   }else{}
 }
 
-//监听message事件
+//监听message事件，构造物定位
 window.addEventListener("message", receiveMessageFromIndex, false);
 function suidao(K0101,A0102,K6324){
   var vectorSource = new VectorSource();
@@ -253,3 +276,210 @@ function luxian(K0101){
     map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/4, maxZoom:16});
   });
 }
+
+// 测距
+/**
+ * Currently drawn feature.
+ * @type {import("../src/ol/Feature.js").default}
+ */
+var sketch;
+
+
+/**
+ * The help tooltip element.
+ * @type {HTMLElement}
+ */
+var helpTooltipElement;
+
+
+/**
+ * Overlay to show the help messages.
+ * @type {Overlay}
+ */
+var helpTooltip;
+
+
+/**
+ * The measure tooltip element.
+ * @type {HTMLElement}
+ */
+var measureTooltipElement;
+
+
+/**
+ * Overlay to show the measurement.
+ * @type {Overlay}
+ */
+var measureTooltip;
+/**
+ * Message to show when the user is drawing a line.
+ * @type {string}
+ */
+var continueLineMsg = '单击继续测量距离；单击两次结束测量。';
+/**
+ * Handle pointer move.
+ * @param {import("../src/ol/MapBrowserEvent").default} evt The event.
+ */
+var pointerMoveHandler
+function listenerPointMove(){
+    pointerMoveHandler = function(evt) {
+    if (evt.dragging) {
+      return;
+    }
+    /** @type {string} */
+    var helpMsg = '单击鼠标左键开始测量距离';
+  
+    if (sketch) {
+      var geom = sketch.getGeometry();
+      if (geom instanceof LineString) {
+        helpMsg = continueLineMsg;
+      }
+    }
+  
+    helpTooltipElement.innerHTML = helpMsg;
+    helpTooltip.setPosition(evt.coordinate);
+  
+    helpTooltipElement.classList.remove('hidden');
+  };
+  
+  map.on('pointermove', pointerMoveHandler);
+  
+  map.getViewport().addEventListener('mouseout', function() {
+    helpTooltipElement.classList.add('hidden');
+  });
+}
+function unListenerPointMove(){
+  map.un('pointermove', pointerMoveHandler);
+}
+var chkMeasure = document.getElementById('chkMeasure');
+
+var draw; // global so we can remove it later
+
+
+/**
+ * Format length output.
+ * @param {LineString} line The line.
+ * @return {string} The formatted length.
+ */
+var formatLength = function(line) {
+  var length = getLength(line);
+  var output;
+  if (length > 100) {
+    output = (Math.round(length / 1000 * 100) / 100) +
+        ' ' + 'km';
+  } else {
+    output = (Math.round(length * 100) / 100) +
+        ' ' + 'm';
+  }
+  return output;
+};
+
+
+function addInteraction() {
+  draw = new Draw({
+    source: source,
+    type: 'LineString',
+    style: new Style({
+      fill: new Fill({
+        color: 'rgba(255, 255, 255, 0.2)'
+      }),
+      stroke: new Stroke({
+        color: 'rgba(0, 0, 0, 0.5)',
+        lineDash: [10, 10],
+        width: 2
+      })
+    })
+  });
+  map.addInteraction(draw);
+
+  createMeasureTooltip();
+  createHelpTooltip();
+
+  var listener;
+  draw.on('drawstart',
+    function(evt) {
+      // set sketch
+      sketch = evt.feature;
+      /** @type {import("../src/ol/coordinate.js").Coordinate|undefined} */
+      var tooltipCoord = evt.coordinate;
+
+      listener = sketch.getGeometry().on('change', function(evt) {
+        var geom = evt.target;
+        var output;
+        if (geom instanceof LineString) {
+          output = formatLength(geom);
+          tooltipCoord = geom.getLastCoordinate();
+        }
+        measureTooltipElement.innerHTML = output;
+        measureTooltip.setPosition(tooltipCoord);
+      });
+    });
+
+  draw.on('drawend',
+    function() {
+      measureTooltipElement.className = 'ol-tooltip ol-tooltip-static';
+      measureTooltip.setOffset([0, -7]);
+      // unset sketch
+      sketch = null;
+      // unset tooltip so that a new one can be created
+      measureTooltipElement = null;
+      createMeasureTooltip();
+      unByKey(listener);
+    });
+}
+
+
+/**
+ * Creates a new help tooltip
+ */
+function createHelpTooltip() {
+  if (helpTooltipElement) {
+    helpTooltipElement.parentNode.removeChild(helpTooltipElement);
+  }
+  helpTooltipElement = document.createElement('div');
+  helpTooltipElement.className = 'ol-tooltip hidden';
+  helpTooltip = new Overlay({
+    element: helpTooltipElement,
+    offset: [15, 0],
+    positioning: 'center-left'
+  });
+  map.addOverlay(helpTooltip);
+}
+
+
+/**
+ * Creates a new measure tooltip
+ */
+function createMeasureTooltip() {
+  if (measureTooltipElement) {
+    measureTooltipElement.parentNode.removeChild(measureTooltipElement);
+  }
+  measureTooltipElement = document.createElement('div');
+  measureTooltipElement.className = 'ol-tooltip ol-tooltip-measure';
+  measureTooltip = new Overlay({
+    element: measureTooltipElement,
+    offset: [0, -15],
+    positioning: 'bottom-center'
+  });
+  map.addOverlay(measureTooltip);
+}
+
+
+/**
+ * Let user change the geometry type.
+ */
+chkMeasure.onchange = function(e) {
+  if(e.target.checked){
+    listenerPointMove()
+    addInteraction();
+    map.un("singleclick", handleSingleClick);
+  }else{
+    map.removeOverlay(measureTooltip);
+    unListenerPointMove()
+    map.removeInteraction(draw);
+    map.on("singleclick", handleSingleClick);
+  }
+  // addInteraction();
+};
+
+// addInteraction();
