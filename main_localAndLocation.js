@@ -362,7 +362,7 @@ var draw; // global so we can remove it later
  * @return {string} The formatted length.
  */
 var formatLength = function(line) {
-  var length = getLength(line);
+  var length = getLength(line,{projection:'EPSG:4326',radius:6378137});
   var output;
   if (length > 100) {
     output = (Math.round(length / 1000 * 100) / 100) +
