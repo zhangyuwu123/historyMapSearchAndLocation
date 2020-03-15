@@ -1,15 +1,25 @@
-import { Map, View, style, geom, layer, source,Feature } from "ol";
-// import TileLayer from "ol/layer/Tile";
-import {Icon, Style} from 'ol/style';
+import { Map, View,Feature } from "ol";
+import("ol/Feature.js").default
+import("ol/MapBrowserEvent").default
+import("ol/coordinate.js").Coordinate|undefined
 import Point from 'ol/geom/Point';
-import Image from "ol/layer/Image";
+import {Icon, Style,Stroke} from 'ol/style';
+import LineString from 'ol/geom/LineString';
 import XYZ from "ol/source/XYZ";
-import { transform, Projection } from "ol/proj";
-import { TileWMS, Vector as VectorSource, ImageWMS } from "ol/source";
+import { Projection } from "ol/proj";
+import { TileWMS, Vector as VectorSource, OSM } from "ol/source";
 import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
+// import 'ol/ol.css';
+import {unByKey} from 'ol/Observable';
+import Overlay from 'ol/Overlay';
+import {getLength} from 'ol/sphere';
+import Draw from 'ol/interaction/Draw';
 
 var regexp = new RegExp(
   'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|qiaoliang|suidao|zizhiquguodao'
+)
+var regexpLuxian = new RegExp(
+  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao'
 )
 let intervalId = null
 var wfsVectorLayer
@@ -32,7 +42,7 @@ var iconStyle = new Style({
 });
 
 iconFeature.setStyle(iconStyle);
-
+var tempVectorLayer = [] //需要清除的线
 var vectorSource = new VectorSource({
   features: [iconFeature]
 });
@@ -117,6 +127,7 @@ map.on("singleclick", function(evt) {
           }
         });
         if(arr.length > 0){
+          drawSelectedLine(features)
           window.postMessage(JSON.stringify({type:'singleClick',data:arr}));
         }
       });
@@ -132,4 +143,35 @@ function CenterMap(long, lat) {
   var view = map.getView();
   view.setCenter([long, lat]);
   iconGeometry.setCoordinates([long, lat]);
+}
+//绘制选中的路线
+function drawSelectedLine(features){
+  if(features.length > 0){
+    //清除之前绘制的线
+    tempVectorLayer.forEach(item =>{
+      map.removeLayer(item)
+    })
+    features.forEach(item =>{
+      if(!regexpLuxian.test(item.id)){
+        return
+      }
+      let vectorSource = new VectorSource();
+      let LineStringFeature = new Feature(
+      new LineString(item.geometry.coordinates[0])); //绘制多边形的数据
+      let vectorLayer = new VectorLayer({
+        source: vectorSource,
+        style: new Style({
+          stroke: new Stroke({
+              width: 3, 
+              color: 'rgba(255, 255, 255, 1)',
+              lineDash: [.1, 5] //or other combinations
+          }),
+          zIndex: 2
+      })
+      });
+      vectorSource.addFeature(LineStringFeature);
+      tempVectorLayer.push(vectorLayer)
+      map.addLayer(vectorLayer);
+    })
+  }
 }

@@ -57,7 +57,7 @@ function addWms() {
       params: {
         VERSION: "1.1.1",
         LAYERS:
-          "cite:xjgd,cite:shengdao,cite:xiandao,cite:xiangdao,cite:zhuanyong,cite:cundao,cite:jianzhilian,cite:jianzhiying,cite:shi,cite:qiaoliang,cite:suidao,cite:tuanchang,cite:zizhiquguodao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+          "cite:xjgd,cite:shengdao,cite:xiandao,cite:xiangdao,cite:zhuanyong,cite:cundao,cite:jianzhilian,cite:jianzhiying,cite:shi,cite:qiaoliang,cite:suidao,cite:tuanchang,cite:zizhiquguodao,cite:xiangzheng,cite:cunzhuang,cite:xianjixingzhengzhongxing", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
         tilesOrigin: 87.6168 + "," + 43.8256
       },
       serverType: "geoserver"
@@ -153,7 +153,7 @@ function drawSelectedLine(features){
 function receiveMessageFromIndex ( event ) {
   let data = JSON.parse(event.data)
   if(data.type === 'luduan'){
-    luxian(data.K0101)
+    luxian(data.K0101,data.K0108)
   }else if(data.type === 'qiaoliang'){
     qiaoliang(data.K0101,data.A0102,data.K6003)
   }else if(data.type === 'suidao'){
@@ -238,7 +238,8 @@ function qiaoliang(K0101,A0102,K6003){
     map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/10, maxZoom:12});
   });
 }
-function luxian(K0101){
+function luxian(K0101,K0108){
+  console.log(K0101,K0108)
   var vectorSource = new VectorSource();
   var vector = new VectorLayer({
     source: vectorSource,
@@ -259,7 +260,7 @@ function luxian(K0101){
     featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao'],
     // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
     outputFormat: 'application/json',
-    filter: likeFilter("LXBM",K0101)
+    filter: andFilter(likeFilter("QDZH",K0108),likeFilter("LXBM",K0101))
   });
   fetch('http://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
