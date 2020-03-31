@@ -260,7 +260,7 @@ function luxian(K0101,K0108){
     featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao'],
     // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
     outputFormat: 'application/json',
-    filter: andFilter(likeFilter("QDZH",K0108),likeFilter("LXBM",K0101))
+    filter: andFilter(equalToFilter("QDZH",K0108),likeFilter("LXBM",K0101))
   });
   fetch('http://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
