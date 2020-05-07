@@ -53,7 +53,7 @@ var vector = new VectorLayer({
 function addWms() {
  wfsVectorLayer = new TileLayer({
     source: new TileWMS({
-      url: "http://39.107.32.7/geoserver/cite/wms",
+      url: "https://dt.jgy-tec.com/geoserver/cite/wms",
       params: {
         VERSION: "1.1.1",
         LAYERS:
@@ -186,7 +186,7 @@ function suidao(K0101,A0102,K6324){
     outputFormat: 'application/json',
     filter: andFilter(likeFilter("DWDM",A0102),likeFilter("LXBM",K0101))
   });
-  fetch('http://dt.jgy-tec.com/geoserver/wfs', {
+  fetch('https://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
     body: new XMLSerializer().serializeToString(featureRequest)
   }).then(function(response) {
@@ -223,7 +223,7 @@ function qiaoliang(K0101,A0102,K6003){
     outputFormat: 'application/json',
     filter: andFilter(likeFilter("WZZH",K6003),likeFilter("DWDM",A0102),likeFilter("LXBM",K0101))
   });
-  fetch('http://dt.jgy-tec.com/geoserver/wfs', {
+  fetch('https://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
     body: new XMLSerializer().serializeToString(featureRequest)
   }).then(function(response) {
@@ -262,7 +262,7 @@ function luxian(K0101,K0108){
     outputFormat: 'application/json',
     filter: andFilter(equalToFilter("QDZH",K0108),likeFilter("LXBM",K0101))
   });
-  fetch('http://dt.jgy-tec.com/geoserver/wfs', {
+  fetch('https://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
     body: new XMLSerializer().serializeToString(featureRequest)
   }).then(function(response) {

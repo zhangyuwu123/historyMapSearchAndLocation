@@ -1,4 +1,5 @@
 import { Map, View,Feature } from "ol";
+import {transform} from 'ol/proj';
 import("ol/Feature.js").default
 import("ol/MapBrowserEvent").default
 import("ol/coordinate.js").Coordinate|undefined
@@ -22,6 +23,7 @@ var regexpLuxian = new RegExp(
   'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao'
 )
 let intervalId = null
+let timeId = null
 var wfsVectorLayer
 var iconGeometry = new Point([87.6168 , 43.8256]);
 var iconFeature = new Feature({
@@ -98,9 +100,14 @@ var map = new Map({
 
 map.on('pointerdrag', function (evt) {
   // 经纬度坐标
-  window.long = null
-  window.lat = null
-  window.postMessage(JSON.stringify({type:'stopLocation'}));
+  clearInt()
+  if(timeId){
+    clearTimeout(timeId)
+  }
+  timeId = setTimeout(() =>{
+    startInterval()
+  },3000)
+  // window.postMessage(JSON.stringify({type:'stopLocation'}));
 });
 
 map.on("singleclick", function(evt) {
@@ -123,9 +130,20 @@ map.on("singleclick", function(evt) {
         var arr = []
         features.forEach(item => {
           if(regexp.test(item.id)){
-            arr.push({id:item.id,value:item.properties})
+            console.log(item.geometry.coordinates,evt.coordinate)
+            let curDist
+            let minObj = getMinDist(item.geometry.coordinates[0],evt.coordinate)
+            console.log(minObj)
+            if(item.properties.QDZH > item.properties.ZDZH){
+              curDist = computerCurDist(item.geometry.coordinates[0],minObj.minIndex)
+            }else{
+              curDist = computerCurDist2(item.geometry.coordinates[0],minObj.minIndex)
+            }
+            
+            arr.push({id:item.id,value:item.properties,curDist:curDist})
           }
         });
+        console.log(arr)
         if(arr.length > 0){
           drawSelectedLine(features)
           window.postMessage(JSON.stringify({type:'singleClick',data:arr}));
@@ -134,16 +152,86 @@ map.on("singleclick", function(evt) {
   }
 });
 addWms()
-intervalId = setInterval(() => {
-  if(window.long && window.lat){
-    CenterMap(window.long ,window.lat)
+startInterval()//开始定位
+function startInterval(){
+  intervalId = setInterval(() => {
+    if(window.long && window.lat){
+      CenterMap(window.long ,window.lat)
+    }
+  }, 2000);
+}
+function clearInt(){
+  if(intervalId){
+    clearInterval(intervalId);
   }
-}, 2000);
+}
 function CenterMap(long, lat) {
   var view = map.getView();
   view.setCenter([long, lat]);
   iconGeometry.setCoordinates([long, lat]);
 }
+function getMinDist(arr,coordinate){
+  let curDist = 0
+  let minDist = 10000
+  let minIndex = 0
+  for(let i = 0;i<arr.length;i++){
+    curDist = distance(arr[i][1],arr[i][0],coordinate[1],coordinate[0],"K")
+    if(curDist < minDist){
+      minDist = curDist
+      minIndex = i
+    }
+  }
+  return {minDist:minDist,minIndex:minIndex}
+}
+function computerCurDist(arr,minIndex){
+  let curDist = 0
+  for(let i = 0;i<arr.length;i++){
+    if(i<=minIndex && i+1 < arr.length){
+      curDist += distance(arr[i][1],arr[i][0],arr[i+1][1],arr[i+1][0],"K")
+    }
+  }
+  return curDist
+}
+function computerCurDist2(arr,minIndex){
+  let curDist = 0
+  for(let i = arr.length-1;i >= 0;i--){
+    if(i>=minIndex && i-1 >= 0){
+      curDist += distance(arr[i][1],arr[i][0],arr[i-1][1],arr[i-1][0],"K")
+    }
+  }
+  return curDist
+}
+function distance(lat1, lon1, lat2, lon2, unit){
+  try {
+    if (lat1 == lat2 && lon1 == lon2) {
+      return 0;
+    } else {
+      var radlat1 = (Math.PI * lat1) / 180;
+      var radlat2 = (Math.PI * lat2) / 180;
+      var theta = lon1 - lon2;
+      var radtheta = (Math.PI * theta) / 180;
+      var dist =
+        Math.sin(radlat1) * Math.sin(radlat2) +
+        Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+      if (dist > 1) {
+        dist = 1;
+      }
+      dist = Math.acos(dist);
+      dist = (dist * 180) / Math.PI;
+      dist = dist * 60 * 1.1515;
+      if (unit == "K") {
+        dist = dist * 1.609344;
+      }
+      if (unit == "N") {
+        dist = dist * 0.8684;
+      }
+      return dist;
+    }
+  } catch (error) {
+    alert(JSON.stringify(error))
+    return 0
+  }
+};
 //绘制选中的路线
 function drawSelectedLine(features){
   if(features.length > 0){

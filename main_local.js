@@ -142,20 +142,20 @@ map.on("singleclick", function(evt) {
   }
 })
 addWms();
-setTimeout(() => {
-  if(window.type === 'luduan'){
-    luxian()
-  }else if(window.type === 'qiaoliang'){
-    qiaoliang()
-  }else if(window.type === 'suidao'){
-    suidao()
-  }else{
-    if(!window.type){
-      alert('type不能为空'+window.type)
-    }
-  }
-}, 2000);
-function suidao(){
+function receiveMessageFromIndex ( event ) {
+  let data = JSON.parse(event.data)
+  if(data.type === 'luduan'){
+    luxian(data.K0101,data.K0108)
+  }else if(data.type === 'qiaoliang'){
+    qiaoliang(data.K0101,data.A0102,data.K6003)
+  }else if(data.type === 'suidao'){
+    suidao(data.K0101,data.A0102,data.K6324)
+  }else{}
+}
+
+//监听message事件，构造物定位
+window.document.addEventListener("message", receiveMessageFromIndex, false);
+function suidao(K0101,A0102,K6324){
   var vectorSource = new VectorSource();
   var vector = new VectorLayer({
     source: vectorSource,
@@ -176,7 +176,7 @@ function suidao(){
     featureTypes: ['cite:suidao'],
     // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
     outputFormat: 'application/json',
-    filter: andFilter(likeFilter("DWDM",window.A0102),likeFilter("LXBM",window.K0101))
+    filter: andFilter(likeFilter("DWDM",A0102),likeFilter("LXBM",K0101))
   });
   fetch('http://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
@@ -190,10 +190,10 @@ function suidao(){
       return
     }
     vectorSource.addFeatures(features);
-    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/4, maxZoom:16});
+    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/10, maxZoom:12});
   });
 }
-function qiaoliang(){
+function qiaoliang(K0101,A0102,K6003){
   var vectorSource = new VectorSource();
   var vector = new VectorLayer({
     source: vectorSource,
@@ -213,7 +213,7 @@ function qiaoliang(){
     featurePrefix: 'cite',  
     featureTypes: ['cite:qiaoliang'],
     outputFormat: 'application/json',
-    filter: andFilter(likeFilter("WZZH",window.K6003),likeFilter("DWDM",window.A0102),likeFilter("LXBM",window.K0101))
+    filter: andFilter(likeFilter("WZZH",K6003),likeFilter("DWDM",A0102),likeFilter("LXBM",K0101))
   });
   fetch('http://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
@@ -230,7 +230,7 @@ function qiaoliang(){
     map.getView().fit(vectorSource.getExtent());
   });
 }
-function luxian(){
+function luxian(K0101,K0108){
   var vectorSource = new VectorSource();
   var vector = new VectorLayer({
     source: vectorSource,
@@ -251,7 +251,7 @@ function luxian(){
     featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao'],
     // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
     outputFormat: 'application/json',
-    filter: andFilter(equalToFilter("QDZH",window.K0108),likeFilter("LXBM",window.K0101))
+    filter: andFilter(equalToFilter("QDZH",K0108 || 0),likeFilter("LXBM",K0101))
   });
   fetch('http://dt.jgy-tec.com/geoserver/wfs', {
     method: 'POST',
@@ -265,7 +265,7 @@ function luxian(){
       return
     }
     vectorSource.addFeatures(features);
-    map.getView().fit(vectorSource.getExtent());
+    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/4, maxZoom:16});
   });
 }
 

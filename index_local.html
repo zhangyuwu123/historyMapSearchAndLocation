@@ -39,23 +39,23 @@
     <!-- <div id="nodelist" style="position: absolute;top:10px;right:10px;width:400px;height:500px"></div> -->
     <script src="./bundle.js"></script>
     <script type="text/javascript">
-       window.document.addEventListener("message", function(event) {
-          let data = JSON.parse(event.data)
-          window.type = data.type
-          if(data.type === 'luduan'){
-            window.K0101 = data.K0101
-            window.K0108 = data.K0108
-          }else if(data.type === 'qiaoliang'){
-            window.K0101 = data.K0101
-            window.A0102 = data.A0102
-            window.K6003 = data.K6003
-          }else if(data.type === 'suidao'){
-            window.K0101 = data.K0101
-            window.A0102 = data.A0102
-            window.K6324 = data.K6324
-          }else{}
+      //  window.document.addEventListener("message", function(event) {
+      //     let data = JSON.parse(event.data)
+      //     window.type = data.type
+      //     if(data.type === 'luduan'){
+      //       window.K0101 = data.K0101
+      //       window.K0108 = data.K0108
+      //     }else if(data.type === 'qiaoliang'){
+      //       window.K0101 = data.K0101
+      //       window.A0102 = data.A0102
+      //       window.K6003 = data.K6003
+      //     }else if(data.type === 'suidao'){
+      //       window.K0101 = data.K0101
+      //       window.A0102 = data.A0102
+      //       window.K6324 = data.K6324
+      //     }else{}
           
-        });
+      //   });
     </script>
   </body>
 </html>
