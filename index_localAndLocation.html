@@ -7,6 +7,10 @@
     <title>轨迹</title>
     <link rel="stylesheet" href="openlayers.css" type="text/css" />
     <link rel="stylesheet" href="ol.css" type="text/css" />
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css"
+  />
     <style>
       html,
       body {
@@ -55,7 +59,6 @@
         line-height: 2em;
         width: 4em;
         line-height: .4em;
-        background-color: rgba(0,60,136,.5);
         border: none;
       }
       .ol-tooltip {
@@ -91,19 +94,86 @@
       .ol-tooltip-static:before {
         border-top-color: #ffcc33;
       }
+      .layerContainer{
+        display: flex;
+        flex-direction: column;
+        width: 160px;
+        height: 500px;
+      }
+      .layerchk{
+        display: inline-block;
+        width: 160px;
+        height: 80px;
+        padding-left: 6px;
+        color: #fff;
+      }
+      #layertitle{
+        width: 100%;
+        display: inline-block;
+        height: 30px;
+        background-color: rgba(0,60,136,0.5);
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <div id="map">
     </div>
     <div id="controls">
+      <div id="layertitle" onclick="handleLayer">收起</div>
       <div class="measureBtn">
         <input type="checkbox" id="chkMeasure" name="chkMeasure"
          >
         <label for="chkMeasure">测距</label>
       </div>
+      <div class="layerContainer">
+        <div class="layerchk">
+          <input type="checkbox" checked id="chkguodao" name="chkguodao" > <label for="chkguodao">国道</label>
+        </div>
+        <div class="layerchk">
+          <input type="checkbox" checked id="chkshengdao" name="chkshengdao" > <label for="chkshengdao">省道</label>
+        </div>
+        <div class="layerchk">
+          <input type="checkbox" checked id="chkxiandao" name="chkxiandao" > <label for="chkxiandao">县道</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkcundao" name="chkcundao" > <label for="chkcundao">村道</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkxiangdao" name="chkxiangdao" > <label for="chkxiangdao">乡道</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox"  checked id="chkzizhiquguodao" name="chkzizhiquguodao" > <label for="chkzizhiquguodao">自治区国道</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkzhuanyonggonglu" name="chkzhuanyonggonglu" > <label for="chkzhuanyonggonglu">专用公路</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkjianzhilian" name="chkjianzhilian" > <label for="chkjianzhilian">建制连</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkjianzhiying" name="chkjianzhiying" > <label for="chkjianzhiying">建制营</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkshi" name="chkshi" > <label for="chkshi">师</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chktuanchang" name="chktuanchang" > <label for="chktuanchang">团场</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chkqiaoliang" name="chkqiaoliang" > <label for="chkqiaoliang">桥梁</label>
+        </div>
+        <div class="layerchk">
+        <input type="checkbox" checked id="chksuidao"" name="chksuidao"" > <label for="chksuidao"">隧道</label>
+        </div>
+      </div>
     </div>
     <!-- <div id="nodelist" style="position: absolute;top:10px;right:10px;width:400px;height:500px"></div> -->
     <script src="./bundle.js"></script>
+    <script>
+      function handleLayer(){
+        var layer = document.getElementById('layertitle')
+      }
+    </script>
   </body>
 </html>
