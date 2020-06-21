@@ -1,17 +1,21 @@
 import { Map, View,Feature } from "ol";
+import {defaults as defaultControls, Control} from 'ol/control';
+import {createStringXY} from 'ol/coordinate';
+import MousePosition from "ol/control/MousePosition.js";
 import("ol/Feature.js").default
 import("ol/MapBrowserEvent").default
 import("ol/coordinate.js").Coordinate|undefined
 import {Stroke, Style,Fill} from 'ol/style';
-import LineString from 'ol/geom/LineString';
+import {LineString, Polygon} from 'ol/geom';
+import Point from 'ol/geom/Point';
 import XYZ from "ol/source/XYZ";
-import { Projection } from "ol/proj";
+import { Projection,transform } from "ol/proj";
 import { TileWMS, Vector as VectorSource, OSM } from "ol/source";
 import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
 // import 'ol/ol.css';
 import {unByKey} from 'ol/Observable';
 import Overlay from 'ol/Overlay';
-import {getLength} from 'ol/sphere';
+import {getLength, getArea} from 'ol/sphere';
 import Draw from 'ol/interaction/Draw';
 
 import {
@@ -27,6 +31,9 @@ var regexp = new RegExp(
 var regexpLuxian = new RegExp(
   'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao'
 )
+var dwdm = getURLParameters()
+var layerFilter = `DWDM like '%${dwdm}%'`
+console.log('dwdm',layerFilter)
 var tempVectorLayer = [] //需要清除的线
 var wfsVectorLayer 
 var wfsshengdao 
@@ -70,7 +77,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:xjgd", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -82,7 +90,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:shengdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -94,7 +103,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:xiandao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -106,7 +116,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:xiangdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -118,7 +129,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:zhuanyong", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -130,7 +142,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:cundao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -142,7 +155,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:jianzhilian", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -154,7 +168,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:jianzhiying", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -166,7 +181,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:shi", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -178,7 +194,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:qiaoliang", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -190,7 +207,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:suidao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -202,7 +220,8 @@ function addWms() {
         VERSION: "1.1.1",
         LAYERS:
           "cite:tuanchang", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-        tilesOrigin: 87.6168 + "," + 43.8256
+        tilesOrigin: 87.6168 + "," + 43.8256,
+        CQL_FILTER: layerFilter
       },
       serverType: "geoserver"
     })
@@ -293,9 +312,19 @@ var tileLayer = new TileLayer({
       "http://mt1.google.cn/vt/lyrs=y@258000000&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=Ga"
   })
 });
+var mousePositionControl = new MousePosition({
+  coordinateFormat: createStringXY(4),
+  projection: 'EPSG:4326',
+  // comment the following two lines to have the mouse position
+  // be placed within the map.
+  className: 'custom-mouse-position',
+  target: document.getElementById('mousePosition'),
+  undefinedHTML: '&nbsp;'
+});
 var projection = new Projection('EPSG:900913');
 var displayProjection = new Projection('EPSG:4326');
 var map = new Map({
+  controls: defaultControls().extend([mousePositionControl]),
   target: "map",
   projection: projection,
 	displayProjection: displayProjection,
@@ -308,10 +337,9 @@ var map = new Map({
 });
 
 //查询选择的路线信息
-map.on("singleclick", handleSingleClick);
 addWms();
+map.on("singleclick", handleSingleClick);
 function handleSingleClick(evt) {
-  debugger
   var view = map.getView();
   var viewResolution = (view.getResolution());
   var url = wfsVectorLayer.getSource().getGetFeatureInfoUrl(
@@ -340,6 +368,21 @@ function handleSingleClick(evt) {
         }
       });
   }
+}
+
+var popup = new Overlay({
+  element: document.getElementById('popup')
+});
+map.addOverlay(popup);
+function handleCoordinate(evt){
+  var element = popup.getElement();
+  var coordinate = evt.coordinate;
+    document.getElementById('popup').style.display='flex'
+
+  document.getElementById('popupLat').innerHTML = '经度：'+coordinate[0].toFixed(6)
+  document.getElementById('popupLong').innerHTML = '纬度：'+ coordinate[1].toFixed(6)
+  element.classList.add('coorContainer')
+  popup.setPosition(coordinate);
 }
 //绘制选中的路线
 function drawSelectedLine(features){
@@ -540,6 +583,9 @@ var measureTooltip;
  * @type {string}
  */
 var continueLineMsg = '单击继续测量距离；单击两次结束测量。';
+
+var continuePolygonMsg = '单击继续测量面积';
+var helpMsg 
 /**
  * Handle pointer move.
  * @param {import("../src/ol/MapBrowserEvent").default} evt The event.
@@ -551,18 +597,21 @@ function listenerPointMove(){
       return;
     }
     /** @type {string} */
-    var helpMsg = '单击鼠标左键开始测量距离';
-  
+    if(typeSelect == 'area'){
+      helpMsg = '单击鼠标左键开始测量面积';
+    }else if(typeSelect == 'length'){
+      helpMsg = '单击鼠标左键开始测量距离';
+    }else{
+
+    }
     if (sketch) {
       var geom = sketch.getGeometry();
       if (geom instanceof LineString) {
         helpMsg = continueLineMsg;
       }
     }
-  
     helpTooltipElement.innerHTML = helpMsg;
     helpTooltip.setPosition(evt.coordinate);
-  
     helpTooltipElement.classList.remove('hidden');
   };
   
@@ -575,8 +624,10 @@ function listenerPointMove(){
 function unListenerPointMove(){
   map.un('pointermove', pointerMoveHandler);
 }
-var chkMeasure = document.getElementById('chkMeasure');
-
+var chkLength = document.getElementById('chkLength');
+var chkCoordinate = document.getElementById('chkCoordinate');
+var chkArea = document.getElementById('chkArea');
+var typeSelect //checkbox选中的值：长度、面积、坐标
 var draw; // global so we can remove it later
 
 
@@ -598,11 +649,26 @@ var formatLength = function(line) {
   return output;
 };
 
+var formatArea = function(polygon) {
+  var area = getArea(polygon);
+  var output;
+  if (area > 10000) {
+    output = (Math.round(area / 1000000 * 100) / 100) +
+        ' ' + 'km<sup>2</sup>';
+  } else {
+    output = (Math.round(area * 100) / 100) +
+        ' ' + 'm<sup>2</sup>';
+  }
+  return output;
+};
+
 
 function addInteraction() {
+  var type = (typeSelect == 'area' ? 'Polygon' : 'LineString');
+
   draw = new Draw({
     source: source,
-    type: 'LineString',
+    type: type,
     style: new Style({
       fill: new Fill({
         color: 'rgba(255, 255, 255, 0.2)'
@@ -630,7 +696,10 @@ function addInteraction() {
       listener = sketch.getGeometry().on('change', function(evt) {
         var geom = evt.target;
         var output;
-        if (geom instanceof LineString) {
+        if (geom instanceof Polygon) {
+          output = formatArea(geom);
+          tooltipCoord = geom.getInteriorPoint().getCoordinates();
+        } else if (geom instanceof LineString) {
           output = formatLength(geom);
           tooltipCoord = geom.getLastCoordinate();
         }
@@ -678,6 +747,11 @@ function createMeasureTooltip() {
   if (measureTooltipElement) {
     measureTooltipElement.parentNode.removeChild(measureTooltipElement);
   }
+  if(typeSelect == 'area'){
+    measureTooltip = ''
+  }else if(typeSelect == 'length'){
+    measureTooltip = ''
+  }else{}
   measureTooltipElement = document.createElement('div');
   measureTooltipElement.className = 'ol-tooltip ol-tooltip-measure';
   measureTooltip = new Overlay({
@@ -692,18 +766,89 @@ function createMeasureTooltip() {
 /**
  * Let user change the geometry type.
  */
-chkMeasure.onchange = function(e) {
+chkLength.onchange = function(e) {
+  unListenerPointMove()
+  map.removeInteraction(draw);
   if(e.target.checked){
+    helpMsg = '单击鼠标左键开始测量距离';
+    chkCoordinate.checked = false
+    chkArea.checked = false
+    typeSelect = 'length'
     listenerPointMove()
     addInteraction();
     map.un("singleclick", handleSingleClick);
+    document.getElementById('popup').style.display='none'
+    map.un("singleclick", handleCoordinate);
   }else{
+    typeSelect = ''
     map.removeOverlay(measureTooltip);
-    unListenerPointMove()
-    map.removeInteraction(draw);
+    document.querySelector('.ol-overlay-container').style.display='none'
+"none"
+    // unListenerPointMove()
+    // map.removeInteraction(draw);
     map.on("singleclick", handleSingleClick);
   }
-  // addInteraction();
 };
 
-// addInteraction();
+
+chkCoordinate.onchange = function(e) {
+  if(e.target.checked){
+    typeSelect = 'coordinate'
+    chkLength.checked = false
+    chkArea.checked = false
+    map.un("singleclick", handleSingleClick);
+    map.on("singleclick", handleCoordinate);
+    unListenerPointMove()
+    map.removeInteraction(draw);
+  }else{
+    map.removeLayer(popup);
+    typeSelect = ''
+    document.getElementById('popup').style.display='none'
+    map.un("singleclick", handleCoordinate);
+    map.on("singleclick", handleSingleClick);
+  }
+};
+
+chkArea.onchange = function(e) {
+  unListenerPointMove()
+  map.removeInteraction(draw);
+  if(e.target.checked){
+    helpMsg = '单击鼠标左键开始测量面积';
+    typeSelect = 'area'
+    chkCoordinate.checked = false
+    chkLength.checked = false
+    listenerPointMove()
+    addInteraction();
+    map.un("singleclick", handleSingleClick);
+    document.getElementById('popup').style.display='none'
+    map.un("singleclick", handleCoordinate);
+  }else{
+    typeSelect = ''
+    map.removeOverlay(measureTooltip);
+    document.querySelector('.ol-overlay-container').style.display='none'
+"none"
+    // map.removeInteraction(draw);
+    map.on("singleclick", handleSingleClick);
+  }
+};
+document.getElementById('clearLine').onclick= function(){
+  source.clear();
+  document.querySelectorAll('.ol-overlay-container').forEach(item => {
+    item.style.display='none'
+  })
+
+}
+
+function getURLParameters(){
+  var reg = /a{3}?/g
+  var str =location.href
+  var vars ={}
+  str.replace(/[?&]+([^=&]+)=([^&]*)/gi,function(str,p1,p2,offset,m){
+      vars[p1] = p2
+  })
+  if(vars['dwdm']){
+    return vars['dwdm']
+  }else{
+    return '66'
+  }
+}
