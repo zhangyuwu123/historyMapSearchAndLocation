@@ -3,7 +3,7 @@ var path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './main_localAndLocation.js',
+  entry: './main_local.js',
   output: {
     path: __dirname,
     filename: 'bundle.js'

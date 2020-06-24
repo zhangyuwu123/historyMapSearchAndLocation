@@ -26,10 +26,10 @@ import {
 import {WFS, GeoJSON} from 'ol/format';
 
 var regexp = new RegExp(
-  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|qiaoliang|suidao|zizhiquguodao'
+  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|qiaoliang|suidao|zizhiquguodao|zizhiqushengdao'
 )
 var regexpLuxian = new RegExp(
-  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao'
+  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao|zizhiqushengdao'
 )
 var dwdm = getURLParameters()
 var layerFilter = `DWDM like '%${dwdm}%'`
@@ -47,6 +47,7 @@ var wfstuanchang
 var wfsxiandao 
 var wfsxiangdao
 var wfszizhiquguodao
+var wfszizhiqushengdao
 var wfszhuanyong
 // 测距
 var raster = new TileLayer({
@@ -238,6 +239,18 @@ function addWms() {
       serverType: "geoserver"
     })
   });
+  wfszizhiqushengdao = new TileLayer({
+    source: new TileWMS({
+      url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+      params: {
+        VERSION: "1.1.1",
+        LAYERS:
+          "cite:zizhiqushengdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+        tilesOrigin: 87.6168 + "," + 43.8256
+      },
+      serverType: "geoserver"
+    })
+  });
   // wfsVectorLayer10 = new TileLayer({
   //   source: new TileWMS({
   //     url: "https://dt.jgy-tec.com/geoserver/cite/wms",
@@ -259,6 +272,7 @@ function addWms() {
   map.addLayer(wfsxiangdao);
   map.addLayer(wfszhuanyong);
   map.addLayer(wfszizhiquguodao);
+  map.addLayer(wfszizhiqushengdao);
   map.addLayer(wfsjianzhilian);
   map.addLayer(wfsjianzhiying);
   map.addLayer(wfscundao);
@@ -283,6 +297,9 @@ function bindlayerclick(){
   };
   document.getElementById('chkzizhiquguodao').onchange = function(e) {
     e.target.checked ? wfszizhiquguodao.setVisible(true) : wfszizhiquguodao.setVisible(false)
+  };
+  document.getElementById('chkzizhiqushengdao').onchange = function(e) {
+    e.target.checked ? wfszizhiqushengdao.setVisible(true) : wfszizhiqushengdao.setVisible(false)
   };
   document.getElementById('chkzhuanyonggonglu').onchange = function(e) {
     e.target.checked ? wfszhuanyong.setVisible(true) : wfszhuanyong.setVisible(false)
@@ -338,38 +355,74 @@ var map = new Map({
 
 //查询选择的路线信息
 addWms();
+var waitGetFeaturesTimeoutId
 map.on("singleclick", handleSingleClick);
 function handleSingleClick(evt) {
+  if(waitGetFeaturesTimeoutId) {
+    clearInterval(waitGetFeaturesTimeoutId)
+  }
   var view = map.getView();
   var viewResolution = (view.getResolution());
-  var url = wfsVectorLayer.getSource().getGetFeatureInfoUrl(
+  var url = null
+  var arr = []
+  var layerCount = 0 ;
+  var fetchedCount = 0
+  var waitGetFeaturesTimeoutId
+  map.getLayers().forEach(function (lyr) {
+    if (lyr.getSource()["getGetFeatureInfoUrl"] !== undefined) {
+      layerCount ++
+    }
+  });
+  map.getLayers().forEach(function (lyr) {
+    if (lyr.getSource()["getGetFeatureInfoUrl"] !== undefined) {
+       url = lyr.getSource().getGetFeatureInfoUrl(
         evt.coordinate,
         viewResolution,
         view.getProjection(),
-        { INFO_FORMAT: "application/json", FEATURE_COUNT: 10 }
+        { 
+          INFO_FORMAT: "application/json",
+          FEATURE_COUNT: 10
+         }
       );
-  if (url) {
-    fetch(url)
-      .then(function (response) {
-         return response.text(); 
-        })
-      .then(function (response) {
-        // console.log(response)
-        var features = JSON.parse(response).features
-        var arr = []
-        features.forEach(item => {
-          if(regexp.test(item.id)){
-            arr.push({id:item.id,value:item.properties})
+    if (url) {
+      fetch(url)
+        .then(function (response) {
+          return response.text(); 
+          })
+        .then(function (response) {
+          // console.log(response)
+          fetchedCount ++
+          var features = JSON.parse(response).features
+          features.forEach(item => {
+            if(regexp.test(item.id)){
+              arr.push({id:item.id,value:item.properties})
+            }
+          });
+          if(arr.length > 0){
+            drawSelectedLine(features)
           }
         });
-        if(arr.length > 0){
-          drawSelectedLine(features)
-          window.parent.postMessage(JSON.stringify({type:'singleClick',data:arr}),"*");
-        }
-      });
-  }
+    }
+    }
+  })
+  waitGetFeaturesTimeoutId = setInterval(function(){
+    if(fetchedCount >= layerCount){
+      clearInterval(waitGetFeaturesTimeoutId)
+      waitGetFeatures(arr)
+    }
+  },500)
+  setTimeout(() => {
+    if(waitGetFeaturesTimeoutId){
+      clearInterval(waitGetFeaturesTimeoutId)
+    }
+  }, 3000);
 }
 
+function waitGetFeatures(arr){
+  if(arr.length > 0){
+    window.parent.postMessage(JSON.stringify({type:'singleClick',data:arr}),"*");
+  }
+}
 var popup = new Overlay({
   element: document.getElementById('popup')
 });
@@ -419,6 +472,8 @@ function drawSelectedLine(features){
 function receiveMessageFromIndex ( event ) {
   let data = JSON.parse(event.data)
   if(data.type === 'luduan'){
+    luduan(data.K0101,data.K0108)
+  }else if(data.type === 'luxian'){
     luxian(data.K0101,data.K0108)
   }else if(data.type === 'qiaoliang'){
     qiaoliang(data.K0101,data.A0102,data.K6003)
@@ -523,7 +578,47 @@ function luxian(K0101,K0108){
     srsName: 'EPSG:4326',
     featureNS: 'http://www.opengeospatial.net/cite',    //命名空間
     featurePrefix: 'cite',  
-    featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao'],
+    featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao','cite:zizhiqushengdao'],
+    // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
+    outputFormat: 'application/json',
+    filter: likeFilter("LXBM",K0101)
+  });
+  fetch('https://dt.jgy-tec.com/geoserver/wfs', {
+    method: 'POST',
+    body: new XMLSerializer().serializeToString(featureRequest)
+  }).then(function(response) {
+    return response.json();
+  }).then(function(json) {
+    var features = new GeoJSON().readFeatures(json);
+    if(features.length === 0){
+      alert('没有找到该要素')
+      return
+    }
+    vectorSource.addFeatures(features);
+    map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/4, maxZoom:16});
+  });
+}
+
+function luduan(K0101,K0108){
+  console.log(K0101,K0108)
+  var vectorSource = new VectorSource();
+  var vector = new VectorLayer({
+    source: vectorSource,
+    style: new Style({
+      stroke: new Stroke({
+        color: 'rgba(0, 0, 255, 1.0)',
+        width: 2
+      })
+    })
+  });
+  
+  map.addLayer(vector);
+  // generate a GetFeature request
+  var featureRequest = new WFS().writeGetFeature({
+    srsName: 'EPSG:4326',
+    featureNS: 'http://www.opengeospatial.net/cite',    //命名空間
+    featurePrefix: 'cite',  
+    featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:zizhiquguodao','cite:zizhiqushengdao'],
     // featureTypes: ['cite:xjgd','cite:shengdao','cite:xiandao','cite:xiangdao','cite:zhuanyong','cite:cundao','cite:jianzhilian','cite:jianzhiying','cite:qiaoliang','cite:suidao','cite:tuanchang','cite:zizhiquguodao'],
     outputFormat: 'application/json',
     filter: andFilter(equalToFilter("QDZH",K0108),likeFilter("LXBM",K0101))
@@ -543,7 +638,6 @@ function luxian(K0101,K0108){
     map.getView().fit(vectorSource.getExtent(),{size:map.getSize()/4, maxZoom:16});
   });
 }
-
 // 测距
 /**
  * Currently drawn feature.
