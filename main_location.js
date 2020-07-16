@@ -11,17 +11,38 @@ import { Projection } from "ol/proj";
 import { TileWMS, Vector as VectorSource, OSM } from "ol/source";
 import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
 // import 'ol/ol.css';
-import {unByKey} from 'ol/Observable';
-import Overlay from 'ol/Overlay';
-import {getLength} from 'ol/sphere';
-import Draw from 'ol/interaction/Draw';
+
+import {
+  equalTo as equalToFilter,
+  like as likeFilter,
+  and as andFilter
+} from 'ol/format/filter';
+import {WFS, GeoJSON} from 'ol/format';
 
 var regexp = new RegExp(
-  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|qiaoliang|suidao|zizhiquguodao'
+  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|qiaoliang|suidao|zizhiquguodao|zizhiqushengdao'
 )
 var regexpLuxian = new RegExp(
-  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao'
+  'xjgd|shengdao|xiandao|xiangdao|zhuanyong|cundao|zizhiquguodao|zizhiqushengdao'
 )
+var dwdm = getURLParameters()
+var layerFilter = `DWDM like '%${dwdm}%'`
+console.log('dwdm',layerFilter)
+var tempVectorLayer = [] //需要清除的线
+var wfsVectorLayer 
+var wfsshengdao 
+var wfscundao 
+var wfsjianzhilian 
+var wfsjianzhiying 
+var wfsqiaoliang 
+var wfsshi 
+var wfssuidao 
+var wfstuanchang 
+var wfsxiandao 
+var wfsxiangdao
+var wfszizhiquguodao
+var wfszizhiqushengdao
+var wfszhuanyong
 let intervalId = null
 let timeId = null
 var wfsVectorLayer
@@ -54,34 +75,262 @@ var vectorLayer = new VectorLayer({
 });
 vectorLayer.setZIndex(100000)//显示在所有层级的最上面
 function addWms() {
-   wfsVectorLayer = new TileLayer({
-    source: new TileWMS({
-      url: "http://39.107.32.7/geoserver/cite/wms",
-      params: {
-        VERSION: "1.1.1",
-        LAYERS:
-          "cite:xjgd,cite:shengdao,cite:xiandao,cite:xiangdao,cite:zhuanyong,cite:cundao,cite:jianzhilian,cite:jianzhiying,cite:shi,cite:qiaoliang,cite:suidao,cite:tuanchang,cite:zizhiquguodao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
-
-        tilesOrigin: 87.6168 + "," + 43.8256
-      },
-      serverType: "geoserver"
-    })
-  });
-  map.addLayer(wfsVectorLayer);
-}
-
-var tileLayer = new TileLayer({
+  wfsVectorLayer = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:xjgd", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsshengdao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:shengdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsxiandao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:xiandao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsxiangdao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:xiangdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfszhuanyong = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:zhuanyong", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfscundao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:cundao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsjianzhilian = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:jianzhilian", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsjianzhiying = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:jianzhiying", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsshi = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:shi", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfsqiaoliang = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:qiaoliang", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfssuidao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:suidao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfstuanchang = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:tuanchang", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256,
+         CQL_FILTER: layerFilter
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfszizhiquguodao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:zizhiquguodao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256
+       },
+       serverType: "geoserver"
+     })
+   });
+   wfszizhiqushengdao = new TileLayer({
+     source: new TileWMS({
+       url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+       params: {
+         VERSION: "1.1.1",
+         LAYERS:
+           "cite:zizhiqushengdao", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+         tilesOrigin: 87.6168 + "," + 43.8256
+       },
+       serverType: "geoserver"
+     })
+   });
+   // wfsVectorLayer10 = new TileLayer({
+   //   source: new TileWMS({
+   //     url: "https://dt.jgy-tec.com/geoserver/cite/wms",
+   //     params: {
+   //       VERSION: "1.1.1",
+   //       LAYERS:
+   //         "cite:xjgd,cite:shengdao,cite:xiandao,cite:xiangdao,cite:zhuanyong,cite:cundao,cite:jianzhilian,cite:jianzhiying,cite:shi,cite:qiaoliang,cite:suidao,cite:tuanchang,cite:zizhiquguodao,cite:xiangzheng,cite:cunzhuang", //可以是单个图层名称，也可以是图层组名称，或多个图层名称，中间用“，”隔开
+   //       tilesOrigin: 87.6168 + "," + 43.8256
+   //     },
+   //     serverType: "geoserver"
+   //   })
+   // });
+   map.addLayer(wfsVectorLayer);
+   map.addLayer(wfsshengdao);
+   map.addLayer(wfsshi);
+   map.addLayer(wfssuidao);
+   map.addLayer(wfstuanchang);
+   map.addLayer(wfsxiandao);
+   map.addLayer(wfsxiangdao);
+   map.addLayer(wfszhuanyong);
+   map.addLayer(wfszizhiquguodao);
+   map.addLayer(wfszizhiqushengdao);
+   map.addLayer(wfsjianzhilian);
+   map.addLayer(wfsjianzhiying);
+   map.addLayer(wfscundao);
+   map.addLayer(wfsqiaoliang);
+   bindlayerclick()
+ }
+ function bindlayerclick(){
+   document.getElementById('chkguodao').onchange = function(e) {
+     e.target.checked ? wfsVectorLayer.setVisible(true) : wfsVectorLayer.setVisible(false)
+   };
+   document.getElementById('chkshengdao').onchange = function(e) {
+     e.target.checked ? wfsshengdao.setVisible(true) : wfsshengdao.setVisible(false)
+   };
+   document.getElementById('chkxiandao').onchange = function(e) {
+     e.target.checked ? wfsxiandao.setVisible(true) : wfsxiandao.setVisible(false)
+   };
+   document.getElementById('chkcundao').onchange = function(e) {
+     e.target.checked ? wfscundao.setVisible(true) : wfscundao.setVisible(false)
+   };
+   document.getElementById('chkxiangdao').onchange = function(e) {
+     e.target.checked ? wfsxiangdao.setVisible(true) : wfsxiangdao.setVisible(false)
+   };
+   document.getElementById('chkzizhiquguodao').onchange = function(e) {
+     e.target.checked ? wfszizhiquguodao.setVisible(true) : wfszizhiquguodao.setVisible(false)
+   };
+   document.getElementById('chkzizhiqushengdao').onchange = function(e) {
+     e.target.checked ? wfszizhiqushengdao.setVisible(true) : wfszizhiqushengdao.setVisible(false)
+   };
+   document.getElementById('chkzhuanyonggonglu').onchange = function(e) {
+     e.target.checked ? wfszhuanyong.setVisible(true) : wfszhuanyong.setVisible(false)
+   };
+   document.getElementById('chkjianzhilian').onchange = function(e) {
+     e.target.checked ? wfsjianzhilian.setVisible(true) : wfsjianzhilian.setVisible(false)
+   };
+   document.getElementById('chkjianzhiying').onchange = function(e) {
+     e.target.checked ? wfsjianzhiying.setVisible(true) : wfsjianzhiying.setVisible(false)
+   };
+   document.getElementById('chkshi').onchange = function(e) {
+     e.target.checked ? wfsshi.setVisible(true) : wfsshi.setVisible(false)
+   };
+   document.getElementById('chktuanchang').onchange = function(e) {
+     e.target.checked ? wfstuanchang.setVisible(true) : wfstuanchang.setVisible(false)
+   };
+   document.getElementById('chkqiaoliang').onchange = function(e) {
+     e.target.checked ? wfsqiaoliang.setVisible(true) : wfsqiaoliang.setVisible(false)
+   };
+   document.getElementById('chksuidao').onchange = function(e) {
+     e.target.checked ? wfssuidao.setVisible(true) : wfssuidao.setVisible(false)
+   };
+ }
+ var tileLayer = new TileLayer({
   source: new XYZ({
     url:
-      "http://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=6"
-  })
-});
-// "http://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=6"
-// http://webst0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}'
-var tileLayer2 = new TileLayer({
-  source: new XYZ({
-    url:
-      "http://webst04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}&ltype=4"
+      "http://mt1.google.cn/vt/lyrs=y@258000000&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=Ga"
   })
 });
 var projection = new Projection('EPSG:900913');
@@ -109,48 +358,80 @@ map.on('pointerdrag', function (evt) {
   },3000)
   // window.postMessage(JSON.stringify({type:'stopLocation'}));
 });
-
-map.on("singleclick", function(evt) {
+var waitGetFeaturesTimeoutId
+map.on("singleclick", handleSingleClick);
+function handleSingleClick(evt) {
+  if(waitGetFeaturesTimeoutId) {
+    clearInterval(waitGetFeaturesTimeoutId)
+  }
   var view = map.getView();
   var viewResolution = (view.getResolution());
-      var url = wfsVectorLayer.getSource().getGetFeatureInfoUrl(
+  var url = null
+  var arr = []
+  var layerCount = 0 ;
+  var fetchedCount = 0
+  var waitGetFeaturesTimeoutId
+  map.getLayers().forEach(function (lyr) {
+    if (lyr.getSource()["getGetFeatureInfoUrl"] !== undefined) {
+      layerCount ++
+    }
+  });
+  map.getLayers().forEach(function (lyr) {
+    if (lyr.getSource()["getGetFeatureInfoUrl"] !== undefined) {
+       url = lyr.getSource().getGetFeatureInfoUrl(
         evt.coordinate,
         viewResolution,
         view.getProjection(),
-        { INFO_FORMAT: "application/json", FEATURE_COUNT: 10 }
+        { 
+          INFO_FORMAT: "application/json",
+          FEATURE_COUNT: 10
+         }
       );
-  if (url) {
-    fetch(url)
-      .then(function (response) {
-         return response.text(); 
-        })
-      .then(function (response) {
-        // console.log(response)
-        var features = JSON.parse(response).features
-        var arr = []
-        features.forEach(item => {
-          if(regexp.test(item.id)){
-            console.log(item.geometry.coordinates,evt.coordinate)
-            let curDist
-            let minObj = getMinDist(item.geometry.coordinates[0],evt.coordinate)
-            console.log(minObj)
-            if(item.properties.QDZH > item.properties.ZDZH){
-              curDist = computerCurDist(item.geometry.coordinates[0],minObj.minIndex)
-            }else{
-              curDist = computerCurDist2(item.geometry.coordinates[0],minObj.minIndex)
+    if (url) {
+      fetch(url)
+        .then(function (response) {
+          return response.text(); 
+          })
+        .then(function (response) {
+          // console.log(response)
+          fetchedCount ++
+          var features = JSON.parse(response).features
+          var arr = []
+          features.forEach(item => {
+            if(regexp.test(item.id)){
+              console.log(item.geometry.coordinates,evt.coordinate)
+              let curDist
+              let minObj = getMinDist(item.geometry.coordinates[0],evt.coordinate)
+              console.log(minObj)
+              if(item.properties.QDZH > item.properties.ZDZH){
+                curDist = computerCurDist(item.geometry.coordinates[0],minObj.minIndex)
+              }else{
+                curDist = computerCurDist2(item.geometry.coordinates[0],minObj.minIndex)
+              }
+              
+              arr.push({id:item.id,value:item.properties,curDist:curDist})
             }
-            
-            arr.push({id:item.id,value:item.properties,curDist:curDist})
+          });
+          console.log(arr)
+          if(arr.length > 0){
+            drawSelectedLine(features)
+            window.postMessage(JSON.stringify({type:'singleClick',data:arr}));
           }
         });
-        console.log(arr)
-        if(arr.length > 0){
-          drawSelectedLine(features)
-          window.postMessage(JSON.stringify({type:'singleClick',data:arr}));
-        }
-      });
-  }
-});
+    }
+    }
+  })
+  waitGetFeaturesTimeoutId = setInterval(function(){
+    if(fetchedCount >= layerCount){
+      clearInterval(waitGetFeaturesTimeoutId)
+    }
+  },500)
+  setTimeout(() => {
+    if(waitGetFeaturesTimeoutId){
+      clearInterval(waitGetFeaturesTimeoutId)
+    }
+  }, 3000);
+}
 addWms()
 startInterval()//开始定位
 function startInterval(){
@@ -261,5 +542,19 @@ function drawSelectedLine(features){
       tempVectorLayer.push(vectorLayer)
       map.addLayer(vectorLayer);
     })
+  }
+}
+
+function getURLParameters(){
+  var reg = /a{3}?/g
+  var str =location.href
+  var vars ={}
+  str.replace(/[?&]+([^=&]+)=([^&]*)/gi,function(str,p1,p2,offset,m){
+      vars[p1] = p2
+  })
+  if(vars['dwdm']){
+    return vars['dwdm']
+  }else{
+    return '66'
   }
 }

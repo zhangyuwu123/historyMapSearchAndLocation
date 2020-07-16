@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html class="um landscape min-width-240px min-width-320px min-width-480px min-width-768px min-width-1024px">
-    <head>
-        <title></title>
+    <head> 
         <meta charset="utf-8">
         <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <title>轨迹</title>
     <link rel="stylesheet" href="openlayers.css" type="text/css" />
+    <link rel="stylesheet" href="ol.css" type="text/css" />
     <style>
       html,
       body {
@@ -160,83 +160,9 @@
     </style>
   </head>
   <body>
+    <div id="mousePosition"></div>
     <div id="map">
     </div>
-    <div id="controls">
-      <div id="layertitle" onclick="handleLayer()">图层
-        <img id="collapsClose" class="layerIcon" src="./images/collaps_close.png">
-        <img id="collapsOpen" class="layerIcon" src="./images/collaps_open.png">
-      </div>
-      <div class="controlsColumn">
-        <div class="layerContainer">
-          <div class="layerchk">
-            <input type="checkbox" checked id="chkguodao" name="chkguodao" > <label for="chkguodao">国道</label>
-          </div>
-          <div class="layerchk">
-            <input type="checkbox" checked id="chkshengdao" name="chkshengdao" > <label for="chkshengdao">省道</label>
-          </div>
-          <div class="layerchk">
-            <input type="checkbox" checked id="chkxiandao" name="chkxiandao" > <label for="chkxiandao">县道</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkcundao" name="chkcundao" > <label for="chkcundao">村道</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkxiangdao" name="chkxiangdao" > <label for="chkxiangdao">乡道</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox"  checked id="chkzizhiquguodao" name="chkzizhiquguodao" > <label for="chkzizhiquguodao">自治区国道</label>
-          </div>
-          <div class="layerchk">
-            <input type="checkbox"  checked id="chkzizhiqushengdao" name="chkzizhiqushengdao" > <label for="chkzizhiqushengdao">自治区省道</label>
-            </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkzhuanyonggonglu" name="chkzhuanyonggonglu" > <label for="chkzhuanyonggonglu">专用公路</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkjianzhilian" name="chkjianzhilian" > <label for="chkjianzhilian">建制连</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkjianzhiying" name="chkjianzhiying" > <label for="chkjianzhiying">建制营</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkshi" name="chkshi" > <label for="chkshi">师</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chktuanchang" name="chktuanchang" > <label for="chktuanchang">团场</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chkqiaoliang" name="chkqiaoliang" > <label for="chkqiaoliang">桥梁</label>
-          </div>
-          <div class="layerchk">
-          <input type="checkbox" checked id="chksuidao"" name="chksuidao"" > <label for="chksuidao"">隧道</label>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- <div id="nodelist" style="position: absolute;top:10px;right:10px;width:400px;height:500px"></div> -->
     <script src="./bundle.js"></script>
-    <script type="text/javascript">
-       window.document.addEventListener("message", function(event) {
-        let data = JSON.parse(event.data)
-          window.long = data.longitude
-          window.lat = data.latitude
-        });
-        var layerCollStatus = 'open'
-      function handleLayer(){  
-        if(layerCollStatus == 'open'){
-          layerCollStatus = 'close'
-          document.getElementById('collapsClose').style.display='none'
-          document.getElementById('collapsOpen').style.display='inline-block'
-          document.getElementById('controls').style.height = '30px'
-        }else{
-          layerCollStatus = 'open'
-          document.getElementById('collapsClose').style.display='inline-block'
-          document.getElementById('collapsOpen').style.display='none'
-          document.getElementById('controls').style.height = '453px'
-
-        }
-      }
-    </script>
   </body>
 </html>
