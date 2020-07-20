@@ -3,20 +3,38 @@ var map = new AMap.Map('container', {
     center: [87.5396, 42.5246],
     zoom: 6
 });
-let bboxParm = null;
+let bboxParm = null
 var layerGuodao = null;
 var layerShengdao = null;
-var currentZoom = 0;
+var currentZoom = 0
+var zizhiquguodaoTimeId = null
+var zizhiqushengdaoTimeId = null
 map.on('zoomchange', function(e) {
-    bboxParm = map.getBounds().toString().replace(';',',');
+   bboxParm = map.getBounds().toString().replace(';',',')
    currentZoom = map.getZoom(); 
-    getJSONGuodao();
-    getJSONShengdao();
+   zizhiquguodaoTimeId && clearTimeout(zizhiquguodaoTimeId)
+   zizhiqushengdaoTimeId && clearTimeout(zizhiqushengdaoTimeId)
+   zizhiquguodaoTimeId = setTimeout(() => {
+        getJSONGuodao()
+    }, 500);
+    zizhiqushengdaoTimeId = setTimeout(() => {
+        getJSONShengdao()
+    }, 500);
+});
+map.on('movestart', function(e) {
+    zizhiquguodaoTimeId && clearTimeout(zizhiquguodaoTimeId)
+    zizhiqushengdaoTimeId && clearTimeout(zizhiqushengdaoTimeId)
 });
 map.on('moveend', function(e) {
-    bboxParm = map.getBounds().toString().replace(';',',');
-    getJSONGuodao();
-    getJSONShengdao();
+    bboxParm = map.getBounds().toString().replace(';',',')
+    if(currentZoom < 8) return
+    zizhiquguodaoTimeId = setTimeout(() => {
+        getJSONGuodao()
+    }, 500);
+    zizhiqushengdaoTimeId = setTimeout(() => {
+        getJSONShengdao()
+    }, 500);
+    
 });
 AMapUI.loadUI(['control/BasicControl'], function(BasicControl) {
     var layerCtrl1 = new BasicControl.LayerSwitcher({
@@ -76,6 +94,7 @@ function getJSONGuodao(){
             }
         }); 
         layerGuodao.setMap(map);
+
         if(currentZoom >= 10){
                 // labelMakers.forEach( item =>{
                     for(var subItem in makerObj){
