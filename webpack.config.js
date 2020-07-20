@@ -1,9 +1,9 @@
 const webpack = require('webpack');
 var path = require('path');
-
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 module.exports = {
   mode: 'development',
-  entry: './liandui1.js',
+  entry: './geojson.js',
   output: {
     path: __dirname,
     filename: 'bundle.js'
